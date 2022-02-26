@@ -13,9 +13,9 @@ namespace Simple_image_viewer_C_Sharp
 
         public class MyConfiguration
         {
-            public string fileName;
-            public string selfPath;
-            public string listsPath;
+            public string FilePath { get; private set; }
+            public string SelfDirPath { get; private set; }
+            public string ListsDirPath { get; set; }
           
             public delegate void SavingDelegate(object sender, JObject root);
             public delegate void LoadingDelegate(object sender, JObject root);
@@ -24,32 +24,32 @@ namespace Simple_image_viewer_C_Sharp
 
             public MyConfiguration(string fileName)
             {
-                this.fileName = fileName;
-                this.selfPath = Path.GetDirectoryName(Application.ExecutablePath);
+                FilePath = fileName;
+                SelfDirPath = Path.GetDirectoryName(Application.ExecutablePath);
                 LoadDefaults();
             }
 
             public void Save()
             {
-                if (File.Exists(fileName))
+                if (File.Exists(FilePath))
                 {
-                    File.Delete(fileName);
+                    File.Delete(FilePath);
                 }
                 JObject json = new JObject();
                 Saving?.Invoke(this, json);
-                File.WriteAllText(fileName, json.ToString());
+                File.WriteAllText(FilePath, json.ToString());
             }
 
             public void LoadDefaults()
             {
-                listsPath = $"{selfPath}\\Lists\\";
+                ListsDirPath = $"{SelfDirPath}\\Lists\\";
             }
 
             public void Load()
             {
-                if (File.Exists(fileName))
+                if (File.Exists(FilePath))
                 {
-                    JObject json = JObject.Parse(File.ReadAllText(fileName));
+                    JObject json = JObject.Parse(File.ReadAllText(FilePath));
                     if (json != null)
                     {
                         Loading?.Invoke(this, json);
@@ -58,8 +58,9 @@ namespace Simple_image_viewer_C_Sharp
             }
         }
 
-        public static List<string> imageFileTypes = new List<string>() { ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".tif", ".jfif", ".ico" };
-        public static List<string> supportedFileTypes = new List<string>();
+        public static List<string> ImageFileTypes { get; private set; } =
+            new List<string>() { ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".tif", ".jfif", ".ico" };
+        public static List<string> SupportedFileTypes { get; private set; } = new List<string>();
         
         public static MyConfiguration config;
 
@@ -73,7 +74,7 @@ namespace Simple_image_viewer_C_Sharp
         {
             try
             {
-                foreach (string t in supportedFileTypes)
+                foreach (string t in SupportedFileTypes)
                 {
                     string ext = t.Substring(1);
                     using (RegistryKey keyExtension = Registry.ClassesRoot.CreateSubKey(t))
@@ -154,7 +155,7 @@ namespace Simple_image_viewer_C_Sharp
         public static bool IsImageFile(string fn)
         {
             string ext = Path.GetExtension(fn).ToLower();
-            return imageFileTypes.Contains(ext);
+            return ImageFileTypes.Contains(ext);
         }
 
         public static void SetClipboardText(string text)

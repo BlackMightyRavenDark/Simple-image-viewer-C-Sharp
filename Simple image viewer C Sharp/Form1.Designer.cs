@@ -36,7 +36,7 @@ namespace Simple_image_viewer_C_Sharp
             this.toolStripStatusLabelCounter = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelStepSize = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelImageSize = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabelFileName = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelFilePath = new System.Windows.Forms.ToolStripStatusLabel();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.miAbsolutePathListsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -97,7 +97,7 @@ namespace Simple_image_viewer_C_Sharp
             this.toolStripStatusLabelCounter,
             this.toolStripStatusLabelStepSize,
             this.toolStripStatusLabelImageSize,
-            this.toolStripStatusLabelFileName});
+            this.toolStripStatusLabelFilePath});
             this.statusStrip1.Location = new System.Drawing.Point(0, 236);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(484, 25);
@@ -122,10 +122,10 @@ namespace Simple_image_viewer_C_Sharp
             this.toolStripStatusLabelImageSize.Size = new System.Drawing.Size(75, 20);
             this.toolStripStatusLabelImageSize.Text = "No image";
             // 
-            // toolStripStatusLabelFileName
+            // toolStripStatusLabelFilePath
             // 
-            this.toolStripStatusLabelFileName.Name = "toolStripStatusLabelFileName";
-            this.toolStripStatusLabelFileName.Size = new System.Drawing.Size(0, 20);
+            this.toolStripStatusLabelFilePath.Name = "toolStripStatusLabelFilePath";
+            this.toolStripStatusLabelFilePath.Size = new System.Drawing.Size(0, 20);
             // 
             // progressBar1
             // 
@@ -416,7 +416,7 @@ namespace Simple_image_viewer_C_Sharp
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelCounter;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFileName;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFilePath;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem miCopyFullImageFileNameToolStripMenuItem;

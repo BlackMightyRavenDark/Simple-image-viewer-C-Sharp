@@ -25,8 +25,8 @@ namespace Simple_image_viewer_C_Sharp
         private Rectangle originalImageRect;
 
         private readonly Random random = new Random((int)DateTime.Now.Ticks);
-        public const string TITLE = "Simple image viewer 1.0.0";
-        Keys[] additionalInputKeys = new[] { Keys.Up, Keys.Right, Keys.Down, Keys.Left, Keys.Tab };
+        public const string TITLE = "Simple image viewer";
+        private readonly Keys[] additionalInputKeys = new[] { Keys.Up, Keys.Right, Keys.Down, Keys.Left, Keys.Tab };
 
         public Form1()
         {
@@ -35,8 +35,8 @@ namespace Simple_image_viewer_C_Sharp
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            supportedFileTypes.AddRange(new string[] { ".siv", ".sivr" });
-            supportedFileTypes.AddRange(imageFileTypes);
+            SupportedFileTypes.AddRange(new string[] { ".siv", ".sivr" });
+            SupportedFileTypes.AddRange(ImageFileTypes);
 
             config = new MyConfiguration(Path.GetDirectoryName(Application.ExecutablePath) + "\\config_siv.json");
             config.Saving += (object _sender, JObject json) =>
@@ -129,9 +129,9 @@ namespace Simple_image_viewer_C_Sharp
 
             config.Load();
 
-            if (Directory.Exists(config.listsPath))
+            if (Directory.Exists(config.ListsDirPath))
             {
-                string[] files = Directory.GetFiles(config.listsPath);
+                string[] files = Directory.GetFiles(config.ListsDirPath);
                 foreach (string fn in files)
                 {
                     string ext = Path.GetExtension(fn).ToLower();
@@ -405,7 +405,6 @@ namespace Simple_image_viewer_C_Sharp
             }
         }
 
-
         protected override bool IsInputKey(Keys keyData)
         {
             return additionalInputKeys.Contains(keyData) || base.IsInputKey(keyData);
@@ -514,7 +513,7 @@ namespace Simple_image_viewer_C_Sharp
                     break;
 
                 case MouseButtons.Right:
-                    contextMenuStrip1.Show(Cursor.Position.X, Cursor.Position.Y);
+                    contextMenuStrip1.Show(Cursor.Position);
                     break;
 
                 case MouseButtons.Middle:
@@ -523,14 +522,14 @@ namespace Simple_image_viewer_C_Sharp
             }
         }
 
-        private bool LoadImage(string fileName)
+        private bool LoadImage(string filePath)
         {
-            if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrWhiteSpace(fileName) && File.Exists(fileName))
+            if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
             {
                 image?.Dispose();
                 try
                 {
-                    image = Image.FromFile(fileName);
+                    image = Image.FromFile(filePath);
                 }
                 catch (Exception ex)
                 {
@@ -542,15 +541,15 @@ namespace Simple_image_viewer_C_Sharp
                 {
                     originalImageRect = new Rectangle(0, 0, image.Width, image.Height);
                     scaledImageRect = CenterRect(ResizeRect(originalImageRect, pictureBox1.Size), pictureBox1.ClientRectangle);
-                    Text = $"{Path.GetFileName(fileName)} | {TITLE}";
+                    Text = $"{Path.GetFileName(filePath)} | {TITLE}";
                     toolStripStatusLabelImageSize.Text = $"{image.Width}x{image.Height}";
-                    toolStripStatusLabelFileName.Text = fileName;
+                    toolStripStatusLabelFilePath.Text = filePath;
                     pictureBox1.Refresh();
                     return true;
                 }
             }
             toolStripStatusLabelImageSize.Text = "Ошибка!";
-            toolStripStatusLabelFileName.Text = $"Ошибка! {fileName}";
+            toolStripStatusLabelFilePath.Text = $"Ошибка! {filePath}";
             pictureBox1.Image = null;
             return false;
         }
@@ -622,11 +621,11 @@ namespace Simple_image_viewer_C_Sharp
             sfd.Filter = "Списки с абсолютными путями|*.siv";
             sfd.DefaultExt = ".siv";
             sfd.AddExtension = true;
-            if (!Directory.Exists(config.listsPath))
+            if (!Directory.Exists(config.ListsDirPath))
             {
-                Directory.CreateDirectory(config.listsPath);
+                Directory.CreateDirectory(config.ListsDirPath);
             }
-            sfd.InitialDirectory = config.listsPath;
+            sfd.InitialDirectory = config.ListsDirPath;
             sfd.FileName = "_list.siv";
             if (sfd.ShowDialog() == DialogResult.OK)
             {
@@ -734,52 +733,52 @@ namespace Simple_image_viewer_C_Sharp
 
         private void OnMenuItemAbsoluteListClick(object sender, EventArgs e)
         {
-            string fn = config.listsPath + (sender as ToolStripMenuItem).Text;
+            string filePath = config.ListsDirPath + (sender as ToolStripMenuItem).Text;
 
-            if (string.IsNullOrEmpty(fn) || string.IsNullOrWhiteSpace(fn) || !File.Exists(fn))
+            if (string.IsNullOrEmpty(filePath) || string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
                 MessageBox.Show("Список не найден!");
                 return;
             }
 
-            if (MessageBox.Show($"Загрузить список из файла?\n{fn}", "Загружатор списка из файла",
+            if (MessageBox.Show($"Загрузить список из файла?\n{filePath}", "Загружатор списка из файла",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
             {
                 return;
             }
 
-            if (!File.Exists(fn))
+            if (!File.Exists(filePath))
             {
                 MessageBox.Show("Список не найден!");
                 return;
             }
 
-            AppendList(fn);
+            AppendList(filePath);
         }
 
         private void OnMenuItemRelativeListClick(object sender, EventArgs e)
         {
-            string fn = (sender as ToolStripMenuItem).Text;
+            string filePath = (sender as ToolStripMenuItem).Text;
 
-            if (string.IsNullOrEmpty(fn) || string.IsNullOrWhiteSpace(fn) || !File.Exists(fn))
+            if (string.IsNullOrEmpty(filePath) || string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
                 MessageBox.Show("Список не найден!");
                 return;
             }
 
-            if (MessageBox.Show($"Загрузить список из файла?\n{fn}", "Загружатор списка из файла",
+            if (MessageBox.Show($"Загрузить список из файла?\n{filePath}", "Загружатор списка из файла",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
             {
                 return;
             }
 
-            if (!File.Exists(fn))
+            if (!File.Exists(filePath))
             {
                 MessageBox.Show("Список не найден!");
                 return;
             }
 
-            AppendList(fn);
+            AppendList(filePath);
         }
 
         private void ClearImageList()
@@ -796,7 +795,7 @@ namespace Simple_image_viewer_C_Sharp
             currentImageFileName = null;
             toolStripStatusLabelCounter.Text = "Список пуст";
             toolStripStatusLabelImageSize.Text = "No image";
-            toolStripStatusLabelFileName.Text = null;
+            toolStripStatusLabelFilePath.Text = null;
             Text = TITLE;
         }
 
@@ -871,7 +870,7 @@ namespace Simple_image_viewer_C_Sharp
             toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
             toolStripStatusLabelStepSize.Text = timer1.Enabled ?
                 $"Interval: {timer1.Interval}ms" : $"Step size: {stepSize}";
-            toolStripStatusLabelFileName.Text = currentImageFileName;
+            toolStripStatusLabelFilePath.Text = currentImageFileName;
         }
 
         private void checkBoxTimer_CheckedChanged(object sender, EventArgs e)
