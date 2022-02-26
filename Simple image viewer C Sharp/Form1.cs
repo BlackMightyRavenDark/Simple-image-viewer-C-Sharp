@@ -613,7 +613,7 @@ namespace Simple_image_viewer_C_Sharp
         {
             if (fileList.Count == 0)
             {
-                MessageBox.Show("Список пуст!");
+                MessageBox.Show("Список пуст!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             SaveFileDialog sfd = new SaveFileDialog();
@@ -737,7 +737,7 @@ namespace Simple_image_viewer_C_Sharp
 
             if (string.IsNullOrEmpty(filePath) || string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
-                MessageBox.Show("Список не найден!");
+                MessageBox.Show("Список не найден!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -749,7 +749,7 @@ namespace Simple_image_viewer_C_Sharp
 
             if (!File.Exists(filePath))
             {
-                MessageBox.Show("Список не найден!");
+                MessageBox.Show("Список не найден!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -762,7 +762,7 @@ namespace Simple_image_viewer_C_Sharp
 
             if (string.IsNullOrEmpty(filePath) || string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
-                MessageBox.Show("Список не найден!");
+                MessageBox.Show("Список не найден!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -774,7 +774,7 @@ namespace Simple_image_viewer_C_Sharp
 
             if (!File.Exists(filePath))
             {
-                MessageBox.Show("Список не найден!");
+                MessageBox.Show("Список не найден!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
