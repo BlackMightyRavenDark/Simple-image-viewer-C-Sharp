@@ -375,6 +375,9 @@ namespace Simple_image_viewer_C_Sharp
 
                 case Keys.S:
                     progressBar1.Visible = !progressBar1.Visible;
+                    checkBoxTimer.Visible = progressBar1.Visible;
+                    btnPrevImage.Visible = progressBar1.Visible;
+                    btnNextImage.Visible = progressBar1.Visible;
                     pictureBox1.Height = progressBar1.Visible ? progressBar1.Top : statusStrip1.Top;
                     break;
 
