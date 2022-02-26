@@ -14,13 +14,13 @@ namespace Simple_image_viewer_C_Sharp
     {
         private Image image;
         private readonly List<string> fileList = new List<string>();
-        private string currentImageFileName;
+        private string currentImageFilePath;
         private int positionInList;
         private Point oldPoint;
         private bool canDrag = false;
         private int timerInterval = 1000;
         private int stepSize = 1;
-        private string defaultImageFileName = null;
+        private string defaultImageFilePath = null;
         private Rectangle scaledImageRect;
         private Rectangle originalImageRect;
 
@@ -38,7 +38,7 @@ namespace Simple_image_viewer_C_Sharp
             SupportedFileTypes.AddRange(new string[] { ".siv", ".sivr" });
             SupportedFileTypes.AddRange(ImageFileTypes);
 
-            config = new MyConfiguration(Path.GetDirectoryName(Application.ExecutablePath) + "\\config_siv.json");
+            config = new MainConfiguration(Path.GetDirectoryName(Application.ExecutablePath) + "\\config_siv.json");
             config.Saving += (object _sender, JObject json) =>
             {
                 json["windowState"] = WindowState == FormWindowState.Maximized ? "maximized" : "normal";
@@ -50,9 +50,9 @@ namespace Simple_image_viewer_C_Sharp
                     json["height"] = Height;
                 }
 
-                if (!string.IsNullOrEmpty(defaultImageFileName))
+                if (!string.IsNullOrEmpty(defaultImageFilePath))
                 {
-                    json["defaultImageFileName"] = defaultImageFileName;
+                    json["defaultImageFileName"] = defaultImageFilePath;
                 }
                 json["closeByMouseClick"] = miCloseByMouseClickToolStripMenuItem.Checked;
                 json["useMouseWheel"] = miUseMouseWheelToolStripMenuItem.Checked;
@@ -107,7 +107,7 @@ namespace Simple_image_viewer_C_Sharp
                 }
 
                 jt = json.Value<JToken>("defaultImageFileName");
-                defaultImageFileName = jt == null ? null : jt.Value<string>();
+                defaultImageFilePath = jt == null ? null : jt.Value<string>();
 
                 jt = json.Value<JToken>("closeByMouseClick");
                 miCloseByMouseClickToolStripMenuItem.Checked = jt != null && jt.Value<bool>();
@@ -145,23 +145,23 @@ namespace Simple_image_viewer_C_Sharp
             }
 
             string[] args = Environment.GetCommandLineArgs();
-            currentImageFileName = args.Length > 1 ? args[1] : null;
-            if (string.IsNullOrEmpty(currentImageFileName) &&
-                !string.IsNullOrEmpty(defaultImageFileName) &&
-                !string.IsNullOrWhiteSpace(defaultImageFileName))
+            currentImageFilePath = args.Length > 1 ? args[1] : null;
+            if (string.IsNullOrEmpty(currentImageFilePath) &&
+                !string.IsNullOrEmpty(defaultImageFilePath) &&
+                !string.IsNullOrWhiteSpace(defaultImageFilePath))
             {
-                currentImageFileName = defaultImageFileName;
+                currentImageFilePath = defaultImageFilePath;
             }
-            if (File.Exists(currentImageFileName))
+            if (File.Exists(currentImageFilePath))
             {
-                string ext = Path.GetExtension(currentImageFileName).ToLower();
+                string ext = Path.GetExtension(currentImageFilePath).ToLower();
                 if (ext == ".siv" || ext == ".sivr")
                 {
-                    AppendList(currentImageFileName);
+                    AppendList(currentImageFilePath);
                 }
                 else
                 {
-                    string dir = Path.GetDirectoryName(currentImageFileName);
+                    string dir = Path.GetDirectoryName(currentImageFilePath);
                     string[] files = Directory.GetFiles(dir);
                     progressBar1.Value = 0;
                     if (files.Length > 0)
@@ -177,20 +177,20 @@ namespace Simple_image_viewer_C_Sharp
                 }
                 if (fileList.Count > 0)
                 {
-                    if (IsImageFile(currentImageFileName))
+                    if (IsImageFile(currentImageFilePath))
                     {
-                        positionInList = fileList.IndexOf(currentImageFileName);
+                        positionInList = fileList.IndexOf(currentImageFilePath);
                     }
                     else
                     {
                         positionInList = 0;
-                        currentImageFileName = fileList[0];
+                        currentImageFilePath = fileList[0];
                     }
                     progressBar1.Maximum = fileList.Count;
                     progressBar1.Value = positionInList + 1;
 
                     toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
-                    LoadImage(currentImageFileName);
+                    LoadImage(currentImageFilePath);
                 }
                 else
                 {
@@ -227,7 +227,7 @@ namespace Simple_image_viewer_C_Sharp
                         Rectangle zoomRect = new Rectangle(scaledImageRect.X - zoomStep, scaledImageRect.Y - zoomStep,
                             scaledImageRect.Width + zoomStep * 2, scaledImageRect.Height + zoomStep * 2);
                         Point location = new Point(scaledImageRect.X, scaledImageRect.Y);
-                        scaledImageRect = CenterRect(ResizeRect(originalImageRect, new Size(zoomRect.Width, zoomRect.Height)), zoomRect);
+                        scaledImageRect = originalImageRect.ResizeTo(new Size(zoomRect.Width, zoomRect.Height)).CenterIn(zoomRect);
                         scaledImageRect.X = location.X - zoomStep;
                         scaledImageRect.Y = location.Y - zoomStep;
                         pictureBox1.Refresh();
@@ -237,7 +237,7 @@ namespace Simple_image_viewer_C_Sharp
                         Rectangle zoomRect = new Rectangle(scaledImageRect.X + zoomStep, scaledImageRect.Y + zoomStep,
                             scaledImageRect.Width - zoomStep * 2, scaledImageRect.Height - zoomStep * 2);
                         Point location = new Point(scaledImageRect.X, scaledImageRect.Y);
-                        scaledImageRect = CenterRect(ResizeRect(originalImageRect, new Size(zoomRect.Width, zoomRect.Height)), zoomRect);
+                        scaledImageRect = originalImageRect.ResizeTo(new Size(zoomRect.Width, zoomRect.Height)).CenterIn(zoomRect);
                         scaledImageRect.X = location.X + zoomStep;
                         scaledImageRect.Y = location.Y + zoomStep;
                         pictureBox1.Refresh();
@@ -320,8 +320,8 @@ namespace Simple_image_viewer_C_Sharp
                         positionInList = 0;
                         progressBar1.Value = positionInList + 1;
                         toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
-                        currentImageFileName = fileList[0];
-                        LoadImage(currentImageFileName);
+                        currentImageFilePath = fileList[0];
+                        LoadImage(currentImageFilePath);
                     }
                     break;
 
@@ -331,8 +331,8 @@ namespace Simple_image_viewer_C_Sharp
                         positionInList = fileList.Count - 1;
                         toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
                         progressBar1.Value = positionInList + 1;
-                        currentImageFileName = fileList[positionInList];
-                        LoadImage(currentImageFileName);
+                        currentImageFilePath = fileList[positionInList];
+                        LoadImage(currentImageFilePath);
                     }
                     break;
 
@@ -450,12 +450,12 @@ namespace Simple_image_viewer_C_Sharp
                 if (countBefore == 0)
                 {
                     positionInList = 0;
-                    currentImageFileName = fileList[0];
-                    LoadImage(currentImageFileName);
+                    currentImageFilePath = fileList[0];
+                    LoadImage(currentImageFilePath);
                 }
                 else
                 {
-                    positionInList = fileList.IndexOf(currentImageFileName);
+                    positionInList = fileList.IndexOf(currentImageFilePath);
                 }
 
                 UpdateIndicators();
@@ -469,7 +469,7 @@ namespace Simple_image_viewer_C_Sharp
                 if (!miZoomToolStripMenuItem.Checked)
                 {
                     scaledImageRect = miFitToScreenToolStripMenuItem.Checked ?
-                        ResizeRect(originalImageRect, pictureBox1.Size) : originalImageRect;
+                        originalImageRect.ResizeTo(pictureBox1.Size) : originalImageRect;
 
                     if (miTiledViewToolStripMenuItem.Checked)
                     {
@@ -483,7 +483,7 @@ namespace Simple_image_viewer_C_Sharp
                     }
                     else
                     {
-                        Rectangle r = CenterRect(scaledImageRect, pictureBox1.ClientRectangle);
+                        Rectangle r = scaledImageRect.CenterIn(pictureBox1.ClientRectangle);
                         e.Graphics.DrawImage(image, r.X, r.Y, r.Width, r.Height);
                     }
                 }
@@ -540,7 +540,7 @@ namespace Simple_image_viewer_C_Sharp
                 if (image != null)
                 {
                     originalImageRect = new Rectangle(0, 0, image.Width, image.Height);
-                    scaledImageRect = CenterRect(ResizeRect(originalImageRect, pictureBox1.Size), pictureBox1.ClientRectangle);
+                    scaledImageRect = originalImageRect.ResizeTo(pictureBox1.Size).CenterIn(pictureBox1.ClientRectangle);
                     Text = $"{Path.GetFileName(filePath)} | {TITLE}";
                     toolStripStatusLabelImageSize.Text = $"{image.Width}x{image.Height}";
                     toolStripStatusLabelFilePath.Text = filePath;
@@ -564,9 +564,9 @@ namespace Simple_image_viewer_C_Sharp
                 {
                     positionInList = 0;
                 }
-                currentImageFileName = fileList[positionInList];
+                currentImageFilePath = fileList[positionInList];
                 UpdateIndicators();
-                LoadImage(currentImageFileName);
+                LoadImage(currentImageFilePath);
             }
         }
 
@@ -580,9 +580,9 @@ namespace Simple_image_viewer_C_Sharp
                 {
                     positionInList = fileList.Count - 1;
                 }
-                currentImageFileName = fileList[positionInList];
+                currentImageFilePath = fileList[positionInList];
                 UpdateIndicators();
-                LoadImage(currentImageFileName);
+                LoadImage(currentImageFilePath);
             }
         }
 
@@ -593,9 +593,9 @@ namespace Simple_image_viewer_C_Sharp
 
         private void copyFullImageFileNameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(currentImageFileName))
+            if (!string.IsNullOrEmpty(currentImageFilePath))
             {
-                SetClipboardText(currentImageFileName);
+                SetClipboardText(currentImageFilePath);
             }
         }
 
@@ -698,17 +698,18 @@ namespace Simple_image_viewer_C_Sharp
             }
         }
 
-        private int AppendList(string listFileName)
+        private int AppendList(string listFilePath)
         {
-            List<string> lst = LoadImageList(listFileName);
+            List<string> lst = LoadImageList(listFilePath);
             if (lst.Count > 0)
             {
                 int countBefore = fileList.Count;
-                foreach (string fn in lst)
+                foreach (string filePath in lst)
                 {
-                    if (!string.IsNullOrEmpty(fn) && !string.IsNullOrWhiteSpace(fn) && IsImageFile(fn) && File.Exists(fn))
+                    if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrWhiteSpace(filePath) &&
+                        IsImageFile(filePath) && File.Exists(filePath))
                     {
-                        fileList.Add(fn);
+                        fileList.Add(filePath);
                     }
                 }
                 if (fileList.Count > 0)
@@ -717,12 +718,12 @@ namespace Simple_image_viewer_C_Sharp
                     if (countBefore == 0 || positionInList < 0)
                     {
                         positionInList = 0;
-                        currentImageFileName = fileList[0];
-                        LoadImage(currentImageFileName);
+                        currentImageFilePath = fileList[0];
+                        LoadImage(currentImageFilePath);
                     }
-                    else if (currentImageFileName != fileList[positionInList])
+                    else if (currentImageFilePath != fileList[positionInList])
                     {
-                        positionInList = fileList.IndexOf(currentImageFileName);
+                        positionInList = fileList.IndexOf(currentImageFilePath);
                     }
                     progressBar1.Value = positionInList + 1;
                     toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
@@ -792,7 +793,7 @@ namespace Simple_image_viewer_C_Sharp
             fileList.Clear();
             positionInList = -1;
             progressBar1.Value = 0;
-            currentImageFileName = null;
+            currentImageFilePath = null;
             toolStripStatusLabelCounter.Text = "Список пуст";
             toolStripStatusLabelImageSize.Text = "No image";
             toolStripStatusLabelFilePath.Text = null;
@@ -822,8 +823,8 @@ namespace Simple_image_viewer_C_Sharp
                         {
                             positionInList = fileList.Count - 1;
                         }
-                        currentImageFileName = fileList[positionInList];
-                        LoadImage(currentImageFileName);
+                        currentImageFilePath = fileList[positionInList];
+                        LoadImage(currentImageFilePath);
                         UpdateIndicators();
                     }
                 }
@@ -857,7 +858,7 @@ namespace Simple_image_viewer_C_Sharp
             if (id != positionInList)
             {
                 positionInList = id;
-                currentImageFileName = fileList[positionInList];
+                currentImageFilePath = fileList[positionInList];
                 UpdateIndicators();
                 LoadImage(fileList[positionInList]);
             }
@@ -870,7 +871,7 @@ namespace Simple_image_viewer_C_Sharp
             toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
             toolStripStatusLabelStepSize.Text = timer1.Enabled ?
                 $"Interval: {timer1.Interval}ms" : $"Step size: {stepSize}";
-            toolStripStatusLabelFilePath.Text = currentImageFileName;
+            toolStripStatusLabelFilePath.Text = currentImageFilePath;
         }
 
         private void checkBoxTimer_CheckedChanged(object sender, EventArgs e)
@@ -917,7 +918,7 @@ namespace Simple_image_viewer_C_Sharp
             if (fileList.Count > 0)
             {
                 OpenFileDialog ofd = new OpenFileDialog();
-                ofd.InitialDirectory = Path.GetDirectoryName(currentImageFileName);
+                ofd.InitialDirectory = Path.GetDirectoryName(currentImageFilePath);
                 ofd.Filter = "Списки с относительными путями|*.sivr";
                 ofd.FileName = "_list.sivr";
                 ofd.AddExtension = true;
@@ -937,15 +938,15 @@ namespace Simple_image_viewer_C_Sharp
 
         private void miSetDefaultImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(currentImageFileName))
+            if (!string.IsNullOrEmpty(currentImageFilePath))
             {
-                defaultImageFileName = currentImageFileName;
+                defaultImageFilePath = currentImageFilePath;
             }
         }
 
         private void miRemoveDefaultImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            defaultImageFileName = null;
+            defaultImageFilePath = null;
         }
 
         private void miRemoveImageFromListToolStripMenuItem_Click(object sender, EventArgs e)
@@ -988,9 +989,9 @@ namespace Simple_image_viewer_C_Sharp
 
         private void miOpenContainingFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(currentImageFileName))
+            if (!string.IsNullOrEmpty(currentImageFilePath))
             {
-                string path = Path.GetDirectoryName(currentImageFileName);
+                string path = Path.GetDirectoryName(currentImageFilePath);
                 if (!string.IsNullOrEmpty(path))
                 {
                     Process process = new Process();
@@ -1023,16 +1024,17 @@ namespace Simple_image_viewer_C_Sharp
 
         private void miZoomToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
+            string imageFileName = Path.GetFileName(currentImageFilePath);
             if (miZoomToolStripMenuItem.Checked)
             {
                 miTiledViewToolStripMenuItem.Checked = false;
-                scaledImageRect = CenterRect(ResizeRect(originalImageRect, pictureBox1.Size), pictureBox1.ClientRectangle);
-                Text = $"{Path.GetFileName(currentImageFileName)} | {TITLE} [ZOOM]";
+                scaledImageRect = originalImageRect.ResizeTo(pictureBox1.Size).CenterIn(pictureBox1.ClientRectangle);
+                Text = $"{imageFileName} | {TITLE} [ZOOM]";
             }
             else
             {
                 canDrag = false;
-                Text = $"{Path.GetFileName(currentImageFileName)} | {TITLE}";
+                Text = $"{imageFileName} | {TITLE}";
             }
             pictureBox1.Refresh();
         }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -8,67 +7,13 @@ using Newtonsoft.Json.Linq;
 
 namespace Simple_image_viewer_C_Sharp
 {
-    public class Utils
+    public static class Utils
     {
-
-        public class MyConfiguration
-        {
-            public string FilePath { get; private set; }
-            public string SelfDirPath { get; private set; }
-            public string ListsDirPath { get; set; }
-          
-            public delegate void SavingDelegate(object sender, JObject root);
-            public delegate void LoadingDelegate(object sender, JObject root);
-            public SavingDelegate Saving;
-            public LoadingDelegate Loading;
-
-            public MyConfiguration(string fileName)
-            {
-                FilePath = fileName;
-                SelfDirPath = Path.GetDirectoryName(Application.ExecutablePath);
-                LoadDefaults();
-            }
-
-            public void Save()
-            {
-                if (File.Exists(FilePath))
-                {
-                    File.Delete(FilePath);
-                }
-                JObject json = new JObject();
-                Saving?.Invoke(this, json);
-                File.WriteAllText(FilePath, json.ToString());
-            }
-
-            public void LoadDefaults()
-            {
-                ListsDirPath = $"{SelfDirPath}\\Lists\\";
-            }
-
-            public void Load()
-            {
-                if (File.Exists(FilePath))
-                {
-                    JObject json = JObject.Parse(File.ReadAllText(FilePath));
-                    if (json != null)
-                    {
-                        Loading?.Invoke(this, json);
-                    }
-                }
-            }
-        }
-
         public static List<string> ImageFileTypes { get; private set; } =
             new List<string>() { ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".tif", ".jfif", ".ico" };
         public static List<string> SupportedFileTypes { get; private set; } = new List<string>();
         
-        public static MyConfiguration config;
-
-
-
-
-
-
+        public static MainConfiguration config;
 
         public static void Associate(string exe)
         {
@@ -97,30 +42,6 @@ namespace Simple_image_viewer_C_Sharp
             {
                 System.Diagnostics.Debug.WriteLine(ex.StackTrace);
             }
-        }
-
-        public static Rectangle ResizeRect(Rectangle source, Size newSize)
-        {
-            float aspectSource = source.Height / (float)source.Width;
-            float aspectDest = newSize.Height / (float)newSize.Width;
-            int w = newSize.Width;
-            int h = newSize.Height;
-            if (aspectSource > aspectDest)
-            {
-                w = (int)(newSize.Height / aspectSource);
-            }
-            else if (aspectSource < aspectDest)
-            {
-                h = (int)(newSize.Width * aspectSource);
-            }
-            return new Rectangle(0, 0, w, h);
-        }
-
-        public static Rectangle CenterRect(Rectangle source, Rectangle dest)
-        {
-            int x = dest.Width / 2 - source.Width / 2;
-            int y = dest.Height / 2 - source.Height / 2;
-            return new Rectangle(x, y, source.Width, source.Height);
         }
 
         public static List<string> LoadImageList(string fileName)
@@ -174,6 +95,53 @@ namespace Simple_image_viewer_C_Sharp
                     res = false;
                 }
             } while (!res);
+        }
+    }
+
+    public class MainConfiguration
+    {
+        public string FilePath { get; private set; }
+        public string SelfDirPath { get; private set; }
+        public string ListsDirPath { get; set; }
+
+        public delegate void SavingDelegate(object sender, JObject root);
+        public delegate void LoadingDelegate(object sender, JObject root);
+        public SavingDelegate Saving;
+        public LoadingDelegate Loading;
+
+        public MainConfiguration(string filePath)
+        {
+            FilePath = filePath;
+            SelfDirPath = Path.GetDirectoryName(Application.ExecutablePath);
+            LoadDefaults();
+        }
+
+        public void Save()
+        {
+            if (File.Exists(FilePath))
+            {
+                File.Delete(FilePath);
+            }
+            JObject json = new JObject();
+            Saving?.Invoke(this, json);
+            File.WriteAllText(FilePath, json.ToString());
+        }
+
+        public void LoadDefaults()
+        {
+            ListsDirPath = $"{SelfDirPath}\\Lists\\";
+        }
+
+        public void Load()
+        {
+            if (File.Exists(FilePath))
+            {
+                JObject json = JObject.Parse(File.ReadAllText(FilePath));
+                if (json != null)
+                {
+                    Loading?.Invoke(this, json);
+                }
+            }
         }
     }
 }
