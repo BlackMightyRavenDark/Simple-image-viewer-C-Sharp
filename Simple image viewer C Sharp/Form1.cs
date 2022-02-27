@@ -63,6 +63,7 @@ namespace Simple_image_viewer_C_Sharp
                     toolStripStatusLabelCounter.Text = $"{fileList.Position + 1} / {fileList.Count}";
                     currentImageFilePath = fileList[index];
                     LoadImage(currentImageFilePath);
+                    UpdateIndicators();
                 }
             };
             fileList.Cleared += (s) =>
@@ -495,9 +496,15 @@ namespace Simple_image_viewer_C_Sharp
                         }
                     }
                 }
-                fileList.Position = countBefore == 0 ? 0 : fileList.IndexOf(currentImageFilePath);
-
-                UpdateIndicators();
+                int id = countBefore == 0 ? 0 : fileList.IndexOf(currentImageFilePath);
+                if (fileList.Position != id)
+                {
+                    fileList.Position = id;
+                }
+                else
+                {
+                    UpdateIndicators();
+                }
             }
         }
 
@@ -604,7 +611,6 @@ namespace Simple_image_viewer_C_Sharp
                     id = 0;
                 }
                 fileList.Position = id;
-                UpdateIndicators();
             }
         }
 
@@ -619,7 +625,6 @@ namespace Simple_image_viewer_C_Sharp
                     id = fileList.Count - 1;
                 }
                 fileList.Position = id;
-                UpdateIndicators();
             }
         }
 
