@@ -39,11 +39,16 @@ namespace Simple_image_viewer_C_Sharp
             }
         }
 
-        public void RemovveAt(int itemIndex)
+        public void RemoveAt(int itemIndex)
         {
             string str = FileList[itemIndex];
             FileList.RemoveAt(itemIndex);
             ItemRemoved?.Invoke(this, itemIndex, str);
+        }
+
+        public int IndexOf(string item)
+        {
+            return FileList.IndexOf(item);
         }
 
         public void Clear()
@@ -60,6 +65,11 @@ namespace Simple_image_viewer_C_Sharp
                 _positionIndex = position;
                 PositionIndexChanged?.Invoke(this, position);
             }
+        }
+
+        public string[] ToArray()
+        {
+            return FileList.ToArray();
         }
     }
 }

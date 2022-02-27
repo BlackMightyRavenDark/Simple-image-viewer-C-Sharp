@@ -13,9 +13,8 @@ namespace Simple_image_viewer_C_Sharp
     public partial class Form1 : Form
     {
         private Image image;
-        private readonly List<string> fileList = new List<string>();
+        private readonly ImageFileList fileList = new ImageFileList();
         private string currentImageFilePath;
-        private int positionInList;
         private Point oldPoint;
         private bool canDrag = false;
         private int timerInterval = 1000;
@@ -35,6 +34,53 @@ namespace Simple_image_viewer_C_Sharp
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            fileList.ItemRemoved += (s, index, item) =>
+            {
+                if (fileList.Count == 0)
+                {
+                    fileList.Clear();
+                }
+                else
+                {
+                    int id = index >= fileList.Count ? fileList.Count - 1 : index;
+                    if (fileList.Position != id)
+                    {
+                        fileList.Position = id;
+                    }
+                    else
+                    {
+                        currentImageFilePath = fileList[fileList.Position];
+                        LoadImage(currentImageFilePath);
+                    }
+                    UpdateIndicators();
+                }
+            };
+            fileList.PositionIndexChanged += (s, index) =>
+            {
+                if (index >= 0)
+                {
+                    progressBar1.Value = fileList.Position + 1;
+                    toolStripStatusLabelCounter.Text = $"{fileList.Position + 1} / {fileList.Count}";
+                    currentImageFilePath = fileList[index];
+                    LoadImage(currentImageFilePath);
+                }
+            };
+            fileList.Cleared += (s) =>
+            {
+                if (image != null)
+                {
+                    image.Dispose();
+                    image = null;
+                }
+                pictureBox1.Image = null;
+                progressBar1.Value = 0;
+                currentImageFilePath = null;
+                toolStripStatusLabelCounter.Text = "Список пуст";
+                toolStripStatusLabelImageSize.Text = "No image";
+                toolStripStatusLabelFilePath.Text = null;
+                Text = TITLE;
+            };
+
             SupportedFileTypes.AddRange(new string[] { ".siv", ".sivr" });
             SupportedFileTypes.AddRange(ImageFileTypes);
 
@@ -179,27 +225,27 @@ namespace Simple_image_viewer_C_Sharp
                 {
                     if (IsImageFile(currentImageFilePath))
                     {
-                        positionInList = fileList.IndexOf(currentImageFilePath);
+                        fileList.Position = fileList.IndexOf(currentImageFilePath);
                     }
                     else
                     {
-                        positionInList = 0;
+                        fileList.Position = 0;
                         currentImageFilePath = fileList[0];
                     }
                     progressBar1.Maximum = fileList.Count;
-                    progressBar1.Value = positionInList + 1;
+                    progressBar1.Value = fileList.Position + 1;
 
-                    toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
+                    toolStripStatusLabelCounter.Text = $"{fileList.Position + 1} / {fileList.Count}";
                     LoadImage(currentImageFilePath);
                 }
                 else
                 {
-                    ClearImageList();
+                    fileList.Clear();
                 }
             }
             else
             {
-                ClearImageList();
+                fileList.Clear();
             }
 
             if (!UacHelper.IsUacEnabled || UacHelper.IsProcessElevated)
@@ -317,22 +363,14 @@ namespace Simple_image_viewer_C_Sharp
                 case Keys.Home:
                     if (progressBar1.Visible && fileList.Count > 1)
                     {
-                        positionInList = 0;
-                        progressBar1.Value = positionInList + 1;
-                        toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
-                        currentImageFilePath = fileList[0];
-                        LoadImage(currentImageFilePath);
+                        fileList.Position = 0;
                     }
                     break;
 
                 case Keys.End:
                     if (progressBar1.Visible && fileList.Count > 1)
                     {
-                        positionInList = fileList.Count - 1;
-                        toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
-                        progressBar1.Value = positionInList + 1;
-                        currentImageFilePath = fileList[positionInList];
-                        LoadImage(currentImageFilePath);
+                        fileList.Position = fileList.Count - 1;
                     }
                     break;
 
@@ -370,7 +408,14 @@ namespace Simple_image_viewer_C_Sharp
                     break;
 
                 case Keys.D:
-                    RemoveFromList(positionInList);
+                    if (fileList.Count > 0 && fileList.Position >= 0)
+                    {
+                        if (MessageBox.Show("Удалить картинку из списка?", "Удалятор картинок из списка",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            fileList.RemoveAt(fileList.Position);
+                        }
+                    }
                     break;
 
                 case Keys.S:
@@ -450,16 +495,7 @@ namespace Simple_image_viewer_C_Sharp
                         }
                     }
                 }
-                if (countBefore == 0)
-                {
-                    positionInList = 0;
-                    currentImageFilePath = fileList[0];
-                    LoadImage(currentImageFilePath);
-                }
-                else
-                {
-                    positionInList = fileList.IndexOf(currentImageFilePath);
-                }
+                fileList.Position = countBefore == 0 ? 0 : fileList.IndexOf(currentImageFilePath);
 
                 UpdateIndicators();
             }
@@ -562,14 +598,13 @@ namespace Simple_image_viewer_C_Sharp
             if (fileList.Count > 1)
             {
                 miZoomToolStripMenuItem.Checked = false;
-                positionInList += stepSize;
-                if (positionInList >= fileList.Count)
+                int id = fileList.Position + stepSize;
+                if (id >= fileList.Count)
                 {
-                    positionInList = 0;
+                    id = 0;
                 }
-                currentImageFilePath = fileList[positionInList];
+                fileList.Position = id;
                 UpdateIndicators();
-                LoadImage(currentImageFilePath);
             }
         }
 
@@ -578,14 +613,13 @@ namespace Simple_image_viewer_C_Sharp
             if (fileList.Count > 1)
             {
                 miZoomToolStripMenuItem.Checked = false;
-                positionInList -= stepSize;
-                if (positionInList < 0)
+                int id = fileList.Position - stepSize;
+                if (id < 0)
                 {
-                    positionInList = fileList.Count - 1;
+                    id = fileList.Count - 1;
                 }
-                currentImageFilePath = fileList[positionInList];
+                fileList.Position = id;
                 UpdateIndicators();
-                LoadImage(currentImageFilePath);
             }
         }
 
@@ -604,7 +638,7 @@ namespace Simple_image_viewer_C_Sharp
 
         private void clearListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearImageList();
+            fileList.Clear();
         }
 
         private void miItemAssociateExtToolStripMenuItem_Click(object sender, EventArgs e)
@@ -633,7 +667,7 @@ namespace Simple_image_viewer_C_Sharp
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 JArray jArray = new JArray();
-                foreach (string name in fileList)
+                foreach (string name in fileList.ToArray())
                 {
                     jArray.Add(name);
                 }
@@ -666,7 +700,7 @@ namespace Simple_image_viewer_C_Sharp
                 sfd.Filter = "Списки с относительными путями|*.sivr";
                 sfd.DefaultExt = ".sivr";
                 sfd.AddExtension = true;
-                string path = Path.GetDirectoryName(fileList[positionInList]) + "\\";
+                string path = Path.GetDirectoryName(fileList[fileList.Position]) + "\\";
                 sfd.InitialDirectory = path;
                 sfd.FileName = "_list.sivr";
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -674,7 +708,7 @@ namespace Simple_image_viewer_C_Sharp
                     JArray jArray = new JArray();
                     path = Path.GetDirectoryName(sfd.FileName) + "\\";
                     int len = path.Length;
-                    foreach (string name in fileList)
+                    foreach (string name in fileList.ToArray())
                     {
                         string fn = name.StartsWith(path) ? name.Substring(len) : name;
                         jArray.Add(fn);
@@ -718,18 +752,16 @@ namespace Simple_image_viewer_C_Sharp
                 if (fileList.Count > 0)
                 {
                     progressBar1.Maximum = fileList.Count;
-                    if (countBefore == 0 || positionInList < 0)
+                    if (countBefore == 0 || fileList.Position < 0)
                     {
-                        positionInList = 0;
-                        currentImageFilePath = fileList[0];
-                        LoadImage(currentImageFilePath);
+                        fileList.Position = 0;
                     }
-                    else if (currentImageFilePath != fileList[positionInList])
+                    else if (currentImageFilePath != fileList[fileList.Position])
                     {
-                        positionInList = fileList.IndexOf(currentImageFilePath);
+                        fileList.Position = fileList.IndexOf(currentImageFilePath);
                     }
-                    progressBar1.Value = positionInList + 1;
-                    toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
+                    progressBar1.Value = fileList.Position + 1;
+                    toolStripStatusLabelCounter.Text = $"{fileList.Position + 1} / {fileList.Count}";
                 }
             }
             return fileList.Count;
@@ -785,55 +817,10 @@ namespace Simple_image_viewer_C_Sharp
             AppendList(filePath);
         }
 
-        private void ClearImageList()
-        {
-            if (image != null)
-            {
-                image.Dispose();
-                image = null;
-            }
-            pictureBox1.Image = null;
-            fileList.Clear();
-            positionInList = -1;
-            progressBar1.Value = 0;
-            currentImageFilePath = null;
-            toolStripStatusLabelCounter.Text = "Список пуст";
-            toolStripStatusLabelImageSize.Text = "No image";
-            toolStripStatusLabelFilePath.Text = null;
-            Text = TITLE;
-        }
-
         private void btnPrevImage_Click(object sender, EventArgs e)
         {
             PreviousImage();
         }
-
-        private void RemoveFromList(int index)
-        {
-            if (fileList.Count > 0 && positionInList >= 0 && index >= 0 && index < fileList.Count)
-            {
-                if (MessageBox.Show("Удалить картинку из списка?", "Удалятор картинок из списка",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    fileList.RemoveAt(positionInList);
-                    if (fileList.Count == 0)
-                    {
-                        ClearImageList();
-                    }
-                    else
-                    {
-                        if (positionInList >= fileList.Count)
-                        {
-                            positionInList = fileList.Count - 1;
-                        }
-                        currentImageFilePath = fileList[positionInList];
-                        LoadImage(currentImageFilePath);
-                        UpdateIndicators();
-                    }
-                }
-            }
-        }
-
 
         private void Form1_Activated(object sender, EventArgs e)
         {
@@ -858,20 +845,17 @@ namespace Simple_image_viewer_C_Sharp
         private void timer1_Tick(object sender, EventArgs e)
         {
             int id = random.Next(fileList.Count);
-            if (id != positionInList)
+            if (id != fileList.Position)
             {
-                positionInList = id;
-                currentImageFilePath = fileList[positionInList];
-                UpdateIndicators();
-                LoadImage(fileList[positionInList]);
+                fileList.Position = id;
             }
         }
 
         private void UpdateIndicators()
         {
             progressBar1.Maximum = fileList.Count;
-            progressBar1.Value = positionInList + 1;
-            toolStripStatusLabelCounter.Text = $"{positionInList + 1} / {fileList.Count}";
+            progressBar1.Value = fileList.Position + 1;
+            toolStripStatusLabelCounter.Text = $"{fileList.Position + 1} / {fileList.Count}";
             toolStripStatusLabelStepSize.Text = timer1.Enabled ?
                 $"Interval: {timer1.Interval}ms" : $"Step size: {stepSize}";
             toolStripStatusLabelFilePath.Text = currentImageFilePath;
@@ -954,7 +938,7 @@ namespace Simple_image_viewer_C_Sharp
 
         private void miRemoveImageFromListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            RemoveFromList(positionInList);
+            fileList.RemoveAt(fileList.Position);
         }
 
         private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
