@@ -643,6 +643,7 @@ namespace Simple_image_viewer_C_Sharp
 
         private void clearListToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            checkBoxTimer.Checked = false;
             fileList.Clear();
         }
 
