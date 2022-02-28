@@ -159,7 +159,7 @@ namespace Simple_image_viewer_C_Sharp
             this.toolStripMenuItem4,
             this.miAssociateExtToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(413, 392);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(413, 414);
             this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // miAbsolutePathListsToolStripMenuItem
@@ -281,6 +281,7 @@ namespace Simple_image_viewer_C_Sharp
             this.miZoomToolStripMenuItem.Size = new System.Drawing.Size(412, 26);
             this.miZoomToolStripMenuItem.Text = "Zoom zoom";
             this.miZoomToolStripMenuItem.CheckedChanged += new System.EventHandler(this.miZoomToolStripMenuItem_CheckedChanged);
+            this.miZoomToolStripMenuItem.Click += new System.EventHandler(this.miZoomToolStripMenuItem_Click);
             // 
             // miUseMouseWheelToolStripMenuItem
             // 

@@ -52,6 +52,8 @@ namespace Simple_image_viewer_C_Sharp
                         currentImageFilePath = fileList[fileList.Position];
                         LoadImage(currentImageFilePath);
                     }
+
+                    miZoomToolStripMenuItem.Checked = false;
                     UpdateIndicators();
                 }
             };
@@ -59,6 +61,7 @@ namespace Simple_image_viewer_C_Sharp
             {
                 if (index >= 0)
                 {
+                    miZoomToolStripMenuItem.Checked = false;
                     progressBar1.Value = fileList.Position + 1;
                     toolStripStatusLabelCounter.Text = $"{fileList.Position + 1} / {fileList.Count}";
                     currentImageFilePath = fileList[index];
@@ -79,11 +82,12 @@ namespace Simple_image_viewer_C_Sharp
                 toolStripStatusLabelCounter.Text = "Список пуст";
                 toolStripStatusLabelImageSize.Text = "No image";
                 toolStripStatusLabelFilePath.Text = null;
-                Text = TITLE;
+                miZoomToolStripMenuItem.Checked = false;
             };
 
             SupportedFileTypes.AddRange(new string[] { ".siv", ".sivr" });
             SupportedFileTypes.AddRange(ImageFileTypes);
+
 
             config = new MainConfiguration(Path.GetDirectoryName(Application.ExecutablePath) + "\\config_siv.json");
             config.Saving += (object _sender, JObject json) =>
@@ -409,14 +413,7 @@ namespace Simple_image_viewer_C_Sharp
                     break;
 
                 case Keys.D:
-                    if (fileList.Count > 0 && fileList.Position >= 0)
-                    {
-                        if (MessageBox.Show("Удалить картинку из списка?", "Удалятор картинок из списка",
-                            MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                        {
-                            fileList.RemoveAt(fileList.Position);
-                        }
-                    }
+                    RequestToRemoveImageFromList(fileList.Position);
                     break;
 
                 case Keys.S:
@@ -625,6 +622,24 @@ namespace Simple_image_viewer_C_Sharp
                     id = fileList.Count - 1;
                 }
                 fileList.Position = id;
+            }
+        }
+
+        private void RequestToRemoveImageFromList(int imagePositionIndex)
+        {
+            if (fileList.Count > 0 && imagePositionIndex >= 0 && imagePositionIndex < fileList.Count)
+            {
+                if (timer1.Enabled)
+                {
+                    MessageBox.Show("Нельзя удалить картинку из списка, пока включен таймер!", "Ошибка!",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                if (MessageBox.Show("Удалить картинку из списка?", "Удалятор картинок из списка",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    fileList.RemoveAt(fileList.Position);
+                }
             }
         }
 
@@ -944,7 +959,7 @@ namespace Simple_image_viewer_C_Sharp
 
         private void miRemoveImageFromListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            fileList.RemoveAt(fileList.Position);
+            RequestToRemoveImageFromList(fileList.Position);
         }
 
         private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
@@ -956,6 +971,7 @@ namespace Simple_image_viewer_C_Sharp
                 miTimerEnabledToolStripMenuItem.Enabled = true;
                 miCopyFullImageFileNameToolStripMenuItem.Enabled = true;
                 miOpenContainingFolderToolStripMenuItem.Enabled = true;
+                miZoomToolStripMenuItem.Enabled = true;
                 miRemoveImageFromListToolStripMenuItem.Enabled = true;
                 miClearListToolStripMenuItem.Enabled = true;
                 miSetDefaultImageToolStripMenuItem.Enabled = true;
@@ -968,6 +984,7 @@ namespace Simple_image_viewer_C_Sharp
                 miTimerEnabledToolStripMenuItem.Enabled = false;
                 miCopyFullImageFileNameToolStripMenuItem.Enabled = false;
                 miOpenContainingFolderToolStripMenuItem.Enabled = false;
+                miZoomToolStripMenuItem.Enabled = false;
                 miRemoveImageFromListToolStripMenuItem.Enabled = false;
                 miClearListToolStripMenuItem.Enabled = false;
                 miSetDefaultImageToolStripMenuItem.Enabled = false;
@@ -1017,6 +1034,24 @@ namespace Simple_image_viewer_C_Sharp
 
         private void miZoomToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
+            string imageFileName = Path.GetFileName(currentImageFilePath);
+            if (miZoomToolStripMenuItem.Checked)
+            {
+                miTiledViewToolStripMenuItem.Checked = false;
+                scaledImageRect = originalImageRect.ResizeTo(pictureBox1.Size).CenterIn(pictureBox1.ClientRectangle);
+                Text = $"{imageFileName} | {TITLE} [ZOOM]";
+            }
+            else
+            {
+                canDrag = false;
+                Text = $"{imageFileName} | {TITLE}";
+            }
+            pictureBox1.Refresh();
+        }
+
+        private void miZoomToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            miZoomToolStripMenuItem.Checked = !miZoomToolStripMenuItem.Checked;
             string imageFileName = Path.GetFileName(currentImageFilePath);
             if (miZoomToolStripMenuItem.Checked)
             {
