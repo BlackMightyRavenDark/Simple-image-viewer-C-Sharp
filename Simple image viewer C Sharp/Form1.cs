@@ -83,6 +83,7 @@ namespace Simple_image_viewer_C_Sharp
                 toolStripStatusLabelImageSize.Text = "No image";
                 toolStripStatusLabelFilePath.Text = null;
                 miZoomToolStripMenuItem.Checked = false;
+                Text = TITLE;
             };
 
             SupportedFileTypes.AddRange(new string[] { ".siv", ".sivr" });
