@@ -229,6 +229,7 @@ namespace Simple_image_viewer_C_Sharp
                 }
                 if (fileList.Count > 0)
                 {
+                    progressBar1.Maximum = fileList.Count;
                     if (IsImageFile(currentImageFilePath))
                     {
                         fileList.Position = fileList.IndexOf(currentImageFilePath);
